@@ -1,5 +1,5 @@
 """
-app.py — Gradio web interface for audio_pull.
+app.py - Gradio web interface for audio_pull.
 Designed for deployment on Hugging Face Spaces.
 
 Authentication is set via environment variables in the Space settings:
@@ -32,7 +32,7 @@ from core import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
 logger = logging.getLogger("app")
 
-# Read credentials from Space secrets — set these in your HuggingFace Space settings
+# Read credentials from Space secrets - set these in your HuggingFace Space settings
 WEB_USERNAME = os.environ.get("WEB_USERNAME", "admin")
 WEB_PASSWORD = os.environ.get("WEB_PASSWORD", "changeme")
 
@@ -54,7 +54,7 @@ def process(
     """
     Download audio and optionally export ringtones.
     Returns (log_text, list_of_file_paths).
-    Each call gets its own temp directory — no state shared between sessions.
+    Each call gets its own temp directory - no state shared between sessions.
     """
     log_lines: list[str] = []
 
@@ -62,7 +62,7 @@ def process(
         log_lines.append(msg)
         logger.info(msg)
 
-    # Parse URLs — one per line, # lines ignored
+    # Parse URLs - one per line, # lines ignored
     urls = [
         line.strip()
         for line in urls_text.splitlines()
@@ -248,7 +248,7 @@ with gr.Blocks(title="audio pull", theme=_THEME, css=_CSS) as demo:
                 placeholder=(
                     "https://youtu.be/...\n"
                     "https://youtu.be/...\n\n"
-                    "# one URL per line — # lines are ignored\n"
+                    "# one URL per line - # lines are ignored\n"
                     "# playlist URLs grab the whole playlist"
                 ),
                 lines=9,
@@ -268,7 +268,7 @@ with gr.Blocks(title="audio pull", theme=_THEME, css=_CSS) as demo:
             with gr.Accordion("iPhone Ringtone Export  (.m4r)", open=False):
                 gr.HTML("""<p style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;
                             color:#555;margin:0 0 14px;line-height:1.7">
-                    Ringtones are trimmed AAC clips in .m4r format — just AirDrop to your iPhone
+                    Ringtones are trimmed AAC clips in .m4r format - just AirDrop to your iPhone
                     and they appear instantly in Settings → Sounds &amp; Haptics → Ringtone.
                     Max 40 seconds (iPhone limit).
                 </p>""")
@@ -277,8 +277,8 @@ with gr.Blocks(title="audio pull", theme=_THEME, css=_CSS) as demo:
                     value="None",
                     label="Mode",
                     info=(
-                        "Single clip — one .m4r starting at your chosen time  ·  "
-                        "All 3 — auto-generates intro (0:00), mid (0:45), outro (1:30)"
+                        "Single clip - one .m4r starting at your chosen time  ·  "
+                        "All 3 - auto-generates intro (0:00), mid (0:45), outro (1:30)"
                     ),
                 )
                 with gr.Row(visible=False) as clip_controls:
@@ -292,7 +292,7 @@ with gr.Blocks(title="audio pull", theme=_THEME, css=_CSS) as demo:
                     duration = gr.Slider(
                         minimum=10, maximum=40, value=30, step=1,
                         label="Length (seconds)",
-                        info="Max 40 seconds — iPhone limit",
+                        info="Max 40 seconds - iPhone limit",
                         scale=3,
                     )
 
