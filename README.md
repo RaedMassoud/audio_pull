@@ -1,3 +1,14 @@
+---
+title: Audio Pull
+emoji: 🎵
+colorFrom: purple
+colorTo: blue
+sdk: gradio
+sdk_version: "4.44.0"
+app_file: app.py
+pinned: false
+---
+
 # audio_pull
 
 Bulk YouTube audio downloader. Downloads audio from one or many YouTube URLs, names each file after the video title, and saves everything to a local `downloads/` folder. Supports playlists, concurrent downloads, and built-in duplicate detection.
