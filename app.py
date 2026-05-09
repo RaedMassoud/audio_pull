@@ -108,32 +108,41 @@ def process(
         if failed:
             log(f"\n⚠  {len(failed)} couldn't be downloaded:")
             for msg in failed:
-                log(f"  {msg}")
+                # yt-dlp errors are verbose; show only the first meaningful line
+                clean = msg.splitlines()[0].removeprefix("ERROR: ").strip()
+                log(f"  {clean}")
 
         # ── Ringtone phase ────────────────────────────────────
         if ringtone_mode != "None" and succeeded:
             all_segs = ringtone_mode == "All 3 (intro / mid / outro)"
-            segments = RINGTONE_ALL_SEGMENTS if all_segs else [(None, start_time)]
-            total_clips = len(succeeded) * len(segments)
-            log(f"\nConverting {total_clips} ringtone clip(s)…")
-            progress(0, desc="Converting ringtones…")
+            try:
+                start_secs_check = timestamp_to_seconds(start_time)
+            except (ValueError, IndexError):
+                log(f"\n⚠  Invalid start time '{start_time}' — use a format like 0:45 or 1:30. Ringtone skipped.")
+                start_secs_check = None
 
-            for i, (title, source) in enumerate(succeeded, 1):
-                file_dur = audio_duration(source)
-                for label, seg_start in segments:
-                    if timestamp_to_seconds(seg_start) >= file_dur:
-                        log(
-                            f"  ⚠  {title} [{label}]: skipped "
-                            f"(track is {file_dur:.0f}s, segment starts at "
-                            f"{timestamp_to_seconds(seg_start):.0f}s)"
-                        )
-                        continue
-                    try:
-                        out = to_ringtone(source, ringtone_dir, seg_start, duration, label)
-                        log(f"  ✓  {out.name}")
-                    except RuntimeError as exc:
-                        log(f"  ✗  {title}: {exc}")
-                progress(i / len(succeeded), desc=f"Ringtones {i}/{len(succeeded)}…")
+            if start_secs_check is not None:
+                segments = RINGTONE_ALL_SEGMENTS if all_segs else [(None, start_time)]
+                total_clips = len(succeeded) * len(segments)
+                log(f"\nConverting {total_clips} ringtone clip(s)…")
+                progress(0, desc="Converting ringtones…")
+
+                for i, (title, source) in enumerate(succeeded, 1):
+                    file_dur = audio_duration(source)
+                    for label, seg_start in segments:
+                        if timestamp_to_seconds(seg_start) >= file_dur:
+                            log(
+                                f"  ⚠  {title} [{label}]: skipped "
+                                f"(track is {file_dur:.0f}s, segment starts at "
+                                f"{timestamp_to_seconds(seg_start):.0f}s)"
+                            )
+                            continue
+                        try:
+                            out = to_ringtone(source, ringtone_dir, seg_start, duration, label)
+                            log(f"  ✓  {out.name}")
+                        except RuntimeError as exc:
+                            log(f"  ✗  {title}: {exc}")
+                    progress(i / len(succeeded), desc=f"Ringtones {i}/{len(succeeded)}…")
 
         # ── Collect output files ──────────────────────────────
         if not succeeded:
@@ -167,7 +176,6 @@ def process(
         return "\n".join(log_lines), output_files
 
     finally:
-        # Clean up session audio/ringtone files; the zip lives separately in /tmp
         shutil.rmtree(session_dir, ignore_errors=True)
 
 
