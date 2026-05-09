@@ -1,4 +1,4 @@
 yt-dlp>=2024.1.0
 tqdm>=4.66.0
 pathvalidate>=3.2.0
-gradio>=5.0.0
+gradio>=5.49.1
