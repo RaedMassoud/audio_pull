@@ -2,7 +2,7 @@
 
 Bulk YouTube audio downloader. Downloads audio from one or many YouTube URLs, names each file after the video title, and saves everything to a local `downloads/` folder. Supports playlists, concurrent downloads, and built-in duplicate detection.
 
-Includes a `--ringtone` mode that exports iPhone-ready `.m4r` clips — no GarageBand required.
+Includes a `--ringtone` mode that exports iPhone-ready `.m4r` clips.
 
 ---
 
@@ -87,7 +87,7 @@ python audio_pull.py --format mp3 https://youtu.be/XXX
 # Opus (best quality at low bitrates)
 python audio_pull.py --format opus https://youtu.be/XXX
 
-# M4A (default — YouTube's native codec, no re-encoding loss)
+# M4A (default - YouTube's native codec, no re-encoding loss)
 python audio_pull.py --format m4a https://youtu.be/XXX
 ```
 
@@ -101,7 +101,7 @@ python audio_pull.py --workers 5 --file urls.txt
 
 ## iPhone Ringtone Mode
 
-The `--ringtone` flag downloads the audio **and** exports a trimmed `.m4r` file to `downloads/ringtones/`. The `.m4r` format is what iOS uses for ringtones — it's just AAC audio in an MP4 container.
+The `--ringtone` flag downloads the audio **and** exports a trimmed `.m4r` file to `downloads/ringtones/`. The `.m4r` format is what iOS uses for ringtones - it's just AAC audio in an MP4 container.
 
 ### Export a ringtone (first 30 seconds)
 
@@ -111,7 +111,7 @@ python audio_pull.py --ringtone https://youtu.be/XXX
 
 ### Choose which part of the song to use
 
-Use `--start` (timestamp) and `--duration` (seconds) to clip the best part — usually the chorus or hook:
+Use `--start` (timestamp) and `--duration` (seconds) to clip the best part - usually the chorus or hook:
 
 ```bash
 # Start at 1 minute, use 30 seconds
@@ -123,7 +123,7 @@ python audio_pull.py --ringtone --start 00:00:45 --duration 25 https://youtu.be/
 
 > **Limits:** iPhone ringtones max out at **40 seconds**. Alert tones and alarm tones max out at **30 seconds**.
 
-### Export 3 ringtones per track — intro, mid, outro
+### Export 3 ringtones per track - intro, mid, outro
 
 Use `--ringtone-all` to automatically generate three clips from each track:
 
@@ -154,10 +154,10 @@ python audio_pull.py --ringtone-only "Song Title.m4a" --ringtone-all
 
 ### Already downloaded a track and want to make it a ringtone?
 
-Use `--ringtone-only` to convert any existing file in `downloads/` — no re-downloading:
+Use `--ringtone-only` to convert any existing file in `downloads/` - no re-downloading:
 
 ```bash
-# Filename only — the script looks in downloads/ automatically
+# Filename only - the script looks in downloads/ automatically
 python audio_pull.py --ringtone-only "Song Title.m4a"
 
 # With a custom clip (start at 45 seconds, 30 seconds long)
@@ -171,7 +171,7 @@ The `.m4r` is saved to `downloads/ringtones/` as usual.
 
 ### Install the ringtone on your iPhone
 
-**Easiest — AirDrop (iOS 14+):**
+**Easiest - AirDrop (iOS 14+):**
 
 1. AirDrop the `.m4r` file from your Mac or PC to your iPhone
 2. On iPhone, tap **Accept**
@@ -186,7 +186,7 @@ The `.m4r` is saved to `downloads/ringtones/` as usual.
 
 **Via Finder (Mac, macOS Catalina+):**
 
-1. Double-click the `.m4r` file — it imports into the Music app automatically
+1. Double-click the `.m4r` file - it imports into the Music app automatically
 2. Connect your iPhone and sync Tones
 
 ---
@@ -243,6 +243,6 @@ The `.yt_archive` file means re-running the same URL list will skip already-down
 
 | Format | Quality | File Size | Compatibility | Notes |
 |---|---|---|---|---|
-| **M4A** (default) | Best | Medium | Excellent | YouTube's native codec — no re-encoding |
+| **M4A** (default) | Best | Medium | Excellent | YouTube's native codec - no re-encoding |
 | **MP3** | Good | Medium | Universal | Requires transcoding; best for old devices |
 | **Opus** | Excellent at low bitrates | Small | Modern apps | Best if file size matters |
