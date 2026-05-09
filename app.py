@@ -165,65 +165,152 @@ def process(
 # Gradio UI
 # ──────────────────────────────────────────────────────────────
 
-with gr.Blocks(title="audio pull", theme=gr.themes.Soft()) as demo:
-    gr.Markdown(
-        "# 🎵 audio pull\n"
-        "Download YouTube audio as M4A / MP3 / Opus. "
-        "Optionally export iPhone ringtone clips (.m4r)."
-    )
+_CSS = """
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 
-    with gr.Row():
-        with gr.Column(scale=1):
+/* ── Layout ───────────────────────────────────── */
+.gradio-container { max-width: 1020px !important; }
+
+/* ── Header ───────────────────────────────────── */
+#ap-header {
+    padding: 6px 0 26px;
+    border-bottom: 1px solid #1f1f1f;
+    margin-bottom: 28px;
+    user-select: none;
+}
+#ap-header h1 {
+    font-family: 'Syne', sans-serif !important;
+    font-size: 2.4rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.05em !important;
+    color: #efefef !important;
+    margin: 0 0 7px !important;
+    line-height: 1 !important;
+}
+#ap-header h1 span { color: #f0a500; }
+#ap-header p {
+    font-family: 'IBM Plex Mono', monospace !important;
+    color: #444 !important;
+    font-size: 0.76rem !important;
+    margin: 0 !important;
+    letter-spacing: 0.06em !important;
+}
+
+/* ── Log ──────────────────────────────────────── */
+#ap-log textarea {
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 0.72rem !important;
+    line-height: 1.9 !important;
+}
+
+/* ── Tip box ──────────────────────────────────── */
+#ap-tip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: #3a3a3a;
+    padding: 14px 0 0;
+    line-height: 1.7;
+}
+"""
+
+_THEME = gr.themes.Base(
+    primary_hue="amber",
+    neutral_hue="neutral",
+    font=[gr.themes.GoogleFont("IBM Plex Mono"), "monospace"],
+    font_mono=[gr.themes.GoogleFont("IBM Plex Mono"), "monospace"],
+)
+
+with gr.Blocks(title="audio pull", theme=_THEME, css=_CSS) as demo:
+
+    gr.HTML("""
+    <div id="ap-header">
+        <h1>audio<span>.</span>pull</h1>
+        <p>youtube → m4a &nbsp;/&nbsp; mp3 &nbsp;/&nbsp; opus &nbsp;&nbsp;·&nbsp;&nbsp; iphone ringtone export (.m4r)</p>
+    </div>
+    """)
+
+    with gr.Row(equal_height=False):
+
+        # ── Left: inputs ───────────────────────────
+        with gr.Column(scale=5):
             urls_box = gr.Textbox(
                 label="YouTube URLs",
                 placeholder=(
-                    "Paste one URL per line:\n"
-                    "https://youtu.be/XXX\n"
-                    "https://youtu.be/YYY\n\n"
-                    "# Lines starting with # are ignored\n"
-                    "# Playlist URLs work too"
+                    "https://youtu.be/...\n"
+                    "https://youtu.be/...\n\n"
+                    "# one URL per line — # lines are ignored\n"
+                    "# playlist URLs grab the whole playlist"
                 ),
-                lines=10,
+                lines=9,
             )
+
             fmt = gr.Radio(
                 choices=["M4A", "MP3", "Opus"],
                 value="M4A",
-                label="Audio format",
-                info="M4A = best quality (YouTube native, no re-encoding loss).  MP3 = universal.  Opus = smallest size.",
-            )
-
-            gr.Markdown("### iPhone Ringtone Export")
-            ringtone_mode = gr.Radio(
-                choices=["None", "Single clip", "All 3 (intro / mid / outro)"],
-                value="None",
-                label="Ringtone mode",
+                label="Format",
                 info=(
-                    "Single clip: one .m4r from --start for --duration seconds.  "
-                    "All 3: intro (0:00), mid (0:45), outro (1:30) — 30s each."
+                    "M4A — YouTube's native codec, no re-encoding, best quality  ·  "
+                    "MP3 — universal, works everywhere  ·  "
+                    "Opus — smallest file size"
                 ),
             )
-            with gr.Row():
-                start_time = gr.Textbox(
-                    value="00:00:00",
-                    label="Start time (HH:MM:SS)",
-                    info="Only used in Single clip mode.",
-                    scale=1,
-                )
-                duration = gr.Slider(
-                    minimum=10,
-                    maximum=40,
-                    value=30,
-                    step=1,
-                    label="Duration (seconds)",
-                    info="Max 40s — iPhone limit.",
-                    scale=2,
-                )
 
-            btn = gr.Button("Download", variant="primary", size="lg")
+            with gr.Accordion("iPhone Ringtone Export  (.m4r)", open=False):
+                gr.HTML("""<p style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;
+                            color:#555;margin:0 0 14px;line-height:1.7">
+                    Ringtones are trimmed AAC clips in .m4r format — just AirDrop to your iPhone
+                    and they appear instantly in Settings → Sounds &amp; Haptics → Ringtone.
+                    Max 40 seconds (iPhone limit).
+                </p>""")
+                ringtone_mode = gr.Radio(
+                    choices=["None", "Single clip", "All 3 (intro / mid / outro)"],
+                    value="None",
+                    label="Mode",
+                    info=(
+                        "Single clip — one .m4r starting at your chosen time  ·  "
+                        "All 3 — auto-generates intro (0:00), mid (0:45), outro (1:30)"
+                    ),
+                )
+                with gr.Row(visible=False) as clip_controls:
+                    start_time = gr.Textbox(
+                        value="00:00:00",
+                        label="Start time  (HH:MM:SS)",
+                        info="Where to begin the clip",
+                        scale=1,
+                    )
+                    duration = gr.Slider(
+                        minimum=10, maximum=40, value=30, step=1,
+                        label="Duration  (seconds)",
+                        info="iPhone max is 40 s",
+                        scale=3,
+                    )
 
-        with gr.Column(scale=1):
-            log_out  = gr.Textbox(label="Log", lines=22, interactive=False, show_copy_button=True)
-            file_out = gr.File(label="Download zip (extract to get your files)")
+            btn = gr.Button("↓  Download", variant="primary", size="lg")
+
+            gr.HTML("""<div id="ap-tip">
+                tip: paste a playlist URL to grab every track at once<br>
+                already downloaded? use the CLI's --ringtone-only flag to convert without re-downloading
+            </div>""")
+
+        # ── Right: output ──────────────────────────
+        with gr.Column(scale=5):
+            log_out = gr.Textbox(
+                label="Log",
+                lines=21,
+                interactive=False,
+                show_copy_button=True,
+                elem_id="ap-log",
+            )
+            file_out = gr.File(label="Download zip  (extract to get your files)")
+
+    def _toggle_clip_controls(mode: str):
+        return gr.update(visible=(mode == "Single clip"))
+
+    ringtone_mode.change(
+        fn=_toggle_clip_controls,
+        inputs=[ringtone_mode],
+        outputs=[clip_controls],
+    )
 
     btn.click(
         fn=process,
