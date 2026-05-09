@@ -231,4 +231,4 @@ with gr.Blocks(title="audio pull", theme=gr.themes.Soft()) as demo:
         outputs=[log_out, file_out],
     )
 
-demo.launch(auth=(WEB_USERNAME, WEB_PASSWORD))
+demo.launch(auth=(WEB_USERNAME, WEB_PASSWORD), ssr_mode=False)
