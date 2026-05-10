@@ -99,7 +99,8 @@ def process(
             for i, future in enumerate(as_completed(futures), 1):
                 url, ok, msg, path = future.result()
                 results.append((url, ok, msg, path))
-                log(f"  {'✓' if ok else '✗'}  {msg}")
+                display = msg if ok else msg.splitlines()[0].removeprefix("ERROR: ").strip()
+                log(f"  {'✓' if ok else '✗'}  {display}")
                 progress(i / len(urls), desc=f"Downloading {i}/{len(urls)}…")
 
         succeeded = [(title, path) for _, ok, title, path in results if ok and path and path.exists()]

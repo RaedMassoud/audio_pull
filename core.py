@@ -61,6 +61,9 @@ def build_ydl_opts(
         "quiet": True,
         "no_warnings": True,
         "noprogress": True,
+        # Use the iOS player client to bypass YouTube's server-IP bot check.
+        # The iOS API endpoint doesn't require sign-in, unlike the web player.
+        "extractor_args": {"youtube": {"player_client": ["ios"]}},
     }
     if archive_path:
         opts["download_archive"] = str(archive_path)
