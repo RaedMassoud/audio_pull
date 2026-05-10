@@ -32,11 +32,14 @@ from core import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
 logger = logging.getLogger("app")
 
-# Read credentials from Space secrets - set these in your HuggingFace Space settings
 WEB_USERNAME = os.environ.get("WEB_USERNAME", "admin")
 WEB_PASSWORD = os.environ.get("WEB_PASSWORD", "changeme")
 
-MAX_WORKERS = 2  # conservative for shared HuggingFace CPU
+# YouTube cookies - upload cookies.txt to the Space's Files tab to unblock downloads.
+# See: https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp
+COOKIES_FILE = Path(__file__).parent / "cookies.txt"
+
+MAX_WORKERS = 2
 
 
 # ──────────────────────────────────────────────────────────────
@@ -87,7 +90,8 @@ def process(
             output_dir=audio_dir,
             audio_format=fmt,
             embed_metadata=True,
-            archive_path=None,  # no duplicate-skip on web; each session is independent
+            archive_path=None,
+            cookies_file=COOKIES_FILE if COOKIES_FILE.exists() else None,
         )
 
         # ── Download phase ────────────────────────────────────
@@ -185,164 +189,128 @@ def process(
 # ──────────────────────────────────────────────────────────────
 
 _CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap');
 
-/* ── Globals ─────────────────────────────────── */
+/* ── GitHub dark palette ─────────────────────── */
 :root {
-    --bg:     #f0ede8;
-    --card:   #ffffff;
-    --border: #e2ddd6;
-    --accent: #ff6b35;
-    --accent-dim: rgba(255,107,53,0.08);
-    --text:   #1c1917;
-    --text-2: #6b6158;
-    --text-3: #b5ada4;
-    --r:   16px;
-    --r-sm: 10px;
-    --sh: 0 1px 3px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.05);
+    --bg:      #0d1117;
+    --canvas:  #161b22;
+    --overlay: #1c2128;
+    --border:  #30363d;
+    --border-s:#21262d;
+    --blue:    #58a6ff;
+    --blue-dim:rgba(88,166,255,0.12);
+    --green:   #238636;
+    --green-h: #2ea043;
+    --text:    #e6edf3;
+    --text-2:  #8b949e;
+    --text-3:  #484f58;
+    --r: 6px;
 }
 
 body, .gradio-container {
     background: var(--bg) !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif !important;
+    color: var(--text) !important;
 }
 .gradio-container { max-width: 680px !important; }
 
 /* ── Header ─────────────────────────────────── */
 #ap-header {
-    text-align: center;
-    padding: 52px 0 40px;
-}
-#ap-logo {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    padding: 5px 16px 5px 7px;
+    padding: 28px 0 24px;
+    border-bottom: 1px solid var(--border);
     margin-bottom: 24px;
-    box-shadow: var(--sh);
-}
-#ap-logo-dot {
-    width: 28px; height: 28px;
-    background: var(--accent);
-    border-radius: 50%;
-    font-size: 15px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-}
-#ap-logo-name {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 0.82rem;
-    color: var(--text);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
 }
 #ap-header h1 {
     font-family: 'Syne', sans-serif !important;
-    font-size: 3rem !important;
+    font-size: 1.35rem !important;
     font-weight: 800 !important;
-    letter-spacing: -0.04em !important;
     color: var(--text) !important;
-    line-height: 1.08 !important;
-    margin: 0 0 16px !important;
+    margin: 0 !important;
+    letter-spacing: -0.02em !important;
 }
 #ap-header p {
-    font-size: 1.05rem !important;
+    font-size: 0.88rem !important;
     color: var(--text-2) !important;
     margin: 0 !important;
-    line-height: 1.55 !important;
 }
 
-/* ── Step labels ─────────────────────────────── */
-.ap-step {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-3);
-    margin: 0 0 8px;
-    padding-left: 2px;
+/* ── Section labels ──────────────────────────── */
+.ap-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 6px;
 }
 
 /* ── Inputs ─────────────────────────────────── */
 .gradio-container textarea,
 .gradio-container input[type="text"] {
-    background: var(--card) !important;
-    border: 1.5px solid var(--border) !important;
-    border-radius: var(--r-sm) !important;
+    background: var(--canvas) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--r) !important;
     color: var(--text) !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    font-size: 0.92rem !important;
-    line-height: 1.65 !important;
-    box-shadow: var(--sh) !important;
-    transition: border-color .15s, box-shadow .15s !important;
+    font-size: 0.9rem !important;
+    line-height: 1.6 !important;
+    transition: border-color .12s !important;
 }
 .gradio-container textarea:focus,
 .gradio-container input[type="text"]:focus {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 0 3px var(--accent-dim), var(--sh) !important;
+    border-color: var(--blue) !important;
+    box-shadow: 0 0 0 3px var(--blue-dim) !important;
     outline: none !important;
 }
 
 /* ── Radio pills ─────────────────────────────── */
 .gradio-container .wrap {
-    gap: 8px !important;
+    gap: 6px !important;
     flex-wrap: wrap !important;
 }
 .gradio-container .wrap label {
-    background: var(--card) !important;
-    border: 1.5px solid var(--border) !important;
+    background: var(--canvas) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 100px !important;
-    padding: 9px 22px !important;
-    font-size: 0.88rem !important;
+    padding: 5px 14px !important;
+    font-size: 0.84rem !important;
     font-weight: 500 !important;
     color: var(--text-2) !important;
     cursor: pointer !important;
-    transition: all .15s !important;
-    box-shadow: var(--sh) !important;
+    transition: all .12s !important;
     white-space: nowrap !important;
 }
 .gradio-container .wrap label:hover {
-    border-color: var(--accent) !important;
-    color: var(--accent) !important;
-    background: var(--accent-dim) !important;
+    border-color: var(--blue) !important;
+    color: var(--blue) !important;
+    background: var(--blue-dim) !important;
 }
 .gradio-container .wrap label.selected {
-    background: var(--accent-dim) !important;
-    border-color: var(--accent) !important;
-    color: var(--accent) !important;
-    font-weight: 700 !important;
+    background: var(--blue-dim) !important;
+    border-color: var(--blue) !important;
+    color: var(--blue) !important;
+    font-weight: 600 !important;
 }
 
 /* ── Slider ─────────────────────────────────── */
-input[type="range"] { accent-color: var(--accent) !important; }
+input[type="range"] { accent-color: var(--blue) !important; }
 
 /* ── Button ─────────────────────────────────── */
 .gradio-container button.primary {
-    background: var(--accent) !important;
+    background: var(--green) !important;
     color: #fff !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    font-weight: 700 !important;
-    font-size: 1.05rem !important;
-    border: none !important;
-    border-radius: 100px !important;
-    padding: 18px 40px !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    border: 1px solid rgba(240,246,252,0.1) !important;
+    border-radius: var(--r) !important;
+    padding: 10px 20px !important;
     width: 100% !important;
     cursor: pointer !important;
-    transition: all .15s ease !important;
-    box-shadow: 0 4px 18px rgba(255,107,53,.35) !important;
-    letter-spacing: -0.01em !important;
+    transition: background .12s !important;
 }
 .gradio-container button.primary:hover {
-    background: #e85a28 !important;
-    box-shadow: 0 6px 26px rgba(255,107,53,.45) !important;
-    transform: translateY(-1px) !important;
-}
-.gradio-container button.primary:active {
-    transform: translateY(0) !important;
+    background: var(--green-h) !important;
 }
 
 /* ── Labels / info ──────────────────────────── */
@@ -350,11 +318,11 @@ input[type="range"] { accent-color: var(--accent) !important; }
 .gradio-container .label-wrap > span {
     font-size: 0.82rem !important;
     font-weight: 600 !important;
-    color: var(--text-2) !important;
+    color: var(--text) !important;
 }
 .gradio-container .info {
-    font-size: 0.75rem !important;
-    color: var(--text-3) !important;
+    font-size: 0.76rem !important;
+    color: var(--text-2) !important;
 }
 
 /* ── Block wrappers ─────────────────────────── */
@@ -367,63 +335,52 @@ input[type="range"] { accent-color: var(--accent) !important; }
 
 /* ── Accordion ──────────────────────────────── */
 .gradio-container .accordion {
-    background: var(--card) !important;
-    border: 1.5px solid var(--border) !important;
+    background: var(--canvas) !important;
+    border: 1px solid var(--border) !important;
     border-radius: var(--r) !important;
-    box-shadow: var(--sh) !important;
     overflow: hidden !important;
 }
 
 /* ── Tabs ───────────────────────────────────── */
 .gradio-container .tabs > .tab-nav {
-    border-bottom: 1.5px solid var(--border) !important;
+    border-bottom: 1px solid var(--border) !important;
     background: transparent !important;
-    margin-bottom: 16px !important;
 }
 .gradio-container .tab-nav button {
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-    font-size: 0.88rem !important;
-    font-weight: 600 !important;
-    color: var(--text-3) !important;
+    font-size: 0.86rem !important;
+    font-weight: 500 !important;
+    color: var(--text-2) !important;
     background: transparent !important;
     border: none !important;
-    border-bottom: 2.5px solid transparent !important;
-    padding: 12px 4px !important;
-    margin-right: 20px !important;
-    transition: color .15s !important;
+    border-bottom: 2px solid transparent !important;
+    padding: 10px 0 !important;
+    margin-right: 16px !important;
+    transition: color .12s !important;
 }
-.gradio-container .tab-nav button:hover { color: var(--text-2) !important; }
+.gradio-container .tab-nav button:hover { color: var(--text) !important; }
 .gradio-container .tab-nav button.selected {
-    color: var(--accent) !important;
-    border-bottom-color: var(--accent) !important;
+    color: var(--text) !important;
+    border-bottom-color: var(--blue) !important;
+    font-weight: 600 !important;
 }
 
-/* ── File component ─────────────────────────── */
+/* ── File / log panels ──────────────────────── */
 .gradio-container .file-preview {
-    background: var(--card) !important;
-    border: 1.5px solid var(--border) !important;
+    background: var(--canvas) !important;
+    border: 1px solid var(--border) !important;
     border-radius: var(--r) !important;
-    box-shadow: var(--sh) !important;
 }
-
-/* ── Log ────────────────────────────────────── */
 #ap-log textarea {
-    font-size: 0.76rem !important;
-    line-height: 1.85 !important;
+    background: var(--canvas) !important;
     color: var(--text-2) !important;
-    font-family: monospace !important;
-    background: var(--card) !important;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace !important;
+    font-size: 0.76rem !important;
+    line-height: 1.8 !important;
 }
 
-/* ── Footer ─────────────────────────────────── */
-#ap-footer {
-    text-align: center;
-    padding: 32px 0 48px;
-    font-size: 0.76rem;
-    color: var(--text-3);
-    line-height: 1.7;
-}
-#ap-footer a { color: var(--text-3); }
+/* ── Remove Gradio branding ─────────────────── */
+footer { display: none !important; }
+.built-with { display: none !important; }
 
 /* ── Scrollbar ──────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
@@ -432,42 +389,33 @@ input[type="range"] { accent-color: var(--accent) !important; }
 """
 
 _THEME = gr.themes.Base(
-    primary_hue="orange",
-    neutral_hue="stone",
-    font=[gr.themes.GoogleFont("Plus Jakarta Sans"), "sans-serif"],
-    font_mono=["monospace"],
+    primary_hue=gr.themes.colors.blue,
+    neutral_hue=gr.themes.colors.slate,
+    font=["system-ui", "-apple-system", "sans-serif"],
+    font_mono=["ui-monospace", "monospace"],
 )
 
 with gr.Blocks(title="audio pull", theme=_THEME, css=_CSS) as demo:
 
-    # ── Header ─────────────────────────────────────────────────
     gr.HTML("""
     <div id="ap-header">
-        <div id="ap-logo">
-            <div id="ap-logo-dot">♪</div>
-            <span id="ap-logo-name">audio.pull</span>
-        </div>
-        <h1>YouTube audio,<br>in seconds.</h1>
-        <p>Paste any YouTube link and get the audio file.<br>
-           No account, no software, no fuss.</p>
+        <h1>audio pull</h1>
+        <p>Download YouTube audio as M4A, MP3, or Opus. Playlists supported.</p>
     </div>
     """)
 
-    # ── Step 1: URLs ────────────────────────────────────────────
-    gr.HTML('<p class="ap-step">Paste your links</p>')
+    gr.HTML('<p class="ap-label">YouTube URLs</p>')
     urls_box = gr.Textbox(
         placeholder=(
             "https://youtu.be/...\n"
             "https://youtu.be/...\n\n"
-            "Paste one link per line.\n"
-            "Playlist links work too - paste one to grab every song."
+            "One link per line. Playlist links grab every song at once."
         ),
         lines=5,
         show_label=False,
     )
 
-    # ── Step 2: Format ──────────────────────────────────────────
-    gr.HTML('<p class="ap-step" style="margin-top:20px">Choose a format</p>')
+    gr.HTML('<p class="ap-label" style="margin-top:16px">Format</p>')
     fmt = gr.Radio(
         choices=[
             ("Best quality  (M4A)", "M4A"),
@@ -476,35 +424,28 @@ with gr.Blocks(title="audio pull", theme=_THEME, css=_CSS) as demo:
         ],
         value="M4A",
         show_label=False,
-        info="Not sure? Leave it on Best quality - it's the same audio YouTube streams.",
+        info="Not sure? M4A is YouTube's native format - no quality loss.",
     )
 
-    # ── Optional: Ringtones ─────────────────────────────────────
     gr.HTML('<div style="height:12px"></div>')
-    with gr.Accordion("Make iPhone Ringtones  (.m4r)  - optional", open=False):
-        gr.HTML("""
-        <p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:0.88rem;
-                  color:#6b6158;margin:4px 0 18px;line-height:1.65">
-            Turns any downloaded song into an iPhone ringtone. AirDrop the
-            .m4r file to your iPhone - it shows up instantly in
-            <strong>Settings - Sounds &amp; Haptics - Ringtone</strong>.
+    with gr.Accordion("iPhone Ringtone Export (.m4r)", open=False):
+        gr.HTML("""<p style="font-size:0.86rem;color:#8b949e;margin:4px 0 16px;line-height:1.6">
+            Exports a trimmed .m4r clip. AirDrop it to your iPhone and it appears in
+            <strong style="color:#c9d1d9">Settings - Sounds &amp; Haptics - Ringtone</strong>.
             Max 40 seconds.
         </p>""")
         ringtone_mode = gr.Radio(
             choices=["None", "Single clip", "All 3 (intro / mid / outro)"],
             value="None",
             label="Ringtone type",
-            info=(
-                "Single clip: choose where in the song to start  -  "
-                "All 3: auto-clips intro (0:00), mid-song (0:45), and outro (1:30)"
-            ),
+            info="Single: choose start + length  -  All 3: auto intro (0:00) / mid (0:45) / outro (1:30)",
         )
         with gr.Row(visible=False) as clip_controls:
             start_time = gr.Textbox(
                 value="0:00",
                 label="Start at",
                 placeholder="e.g. 0:45 or 1:30",
-                info="Where in the song to begin the clip",
+                info="Where in the song to begin",
                 scale=1,
             )
             duration = gr.Slider(
@@ -514,37 +455,23 @@ with gr.Blocks(title="audio pull", theme=_THEME, css=_CSS) as demo:
                 scale=3,
             )
 
-    # ── Download button ─────────────────────────────────────────
-    gr.HTML('<div style="height:20px"></div>')
-    btn = gr.Button("Download", variant="primary", size="lg")
+    gr.HTML('<div style="height:16px"></div>')
+    btn = gr.Button("Download", variant="primary")
 
-    # ── Output: files first, log tucked away ────────────────────
-    gr.HTML('<div style="height:28px"></div>')
+    gr.HTML('<div style="height:24px"></div>')
     with gr.Tabs():
         with gr.Tab("Your files"):
-            file_out = gr.File(
-                file_count="multiple",
-                show_label=False,
-            )
-        with gr.Tab("Activity log"):
+            file_out = gr.File(file_count="multiple", show_label=False)
+        with gr.Tab("Log"):
             log_out = gr.Textbox(
-                lines=14,
+                lines=12,
                 interactive=False,
                 show_copy_button=True,
                 show_label=False,
                 elem_id="ap-log",
-                placeholder="Logs will appear here after you hit Download.",
+                placeholder="Activity log appears here after downloading.",
             )
 
-    # ── Footer ──────────────────────────────────────────────────
-    gr.HTML("""
-    <div id="ap-footer">
-        Paste a link. Hit download. That's it.<br>
-        Playlists, single videos, and ringtone export all supported.
-    </div>
-    """)
-
-    # ── Event handlers ──────────────────────────────────────────
     def _toggle_clip_controls(mode: str):
         return gr.update(visible=(mode == "Single clip"))
 
@@ -560,4 +487,5 @@ with gr.Blocks(title="audio pull", theme=_THEME, css=_CSS) as demo:
         outputs=[log_out, file_out],
     )
 
-demo.launch(auth=(WEB_USERNAME, WEB_PASSWORD), ssr_mode=False)
+demo.queue()
+demo.launch(auth=(WEB_USERNAME, WEB_PASSWORD), ssr_mode=False, show_api=False)

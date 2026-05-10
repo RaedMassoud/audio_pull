@@ -37,17 +37,19 @@ def build_ydl_opts(
     audio_format: str,
     embed_metadata: bool,
     archive_path: Optional[Path] = None,
+    cookies_file: Optional[Path] = None,
 ) -> dict:
     """Return yt-dlp options for audio-only extraction.
 
-    `archive_path` enables duplicate-skip tracking. Pass None to disable
-    (e.g. the web UI where each session starts fresh).
+    `archive_path` enables duplicate-skip tracking. Pass None to disable.
+    `cookies_file` path to a Netscape-format cookies.txt — required when
+    running on cloud servers where YouTube blocks datacenter IPs.
     """
     postprocessors: list[dict] = [
         {
             "key": "FFmpegExtractAudio",
             "preferredcodec": audio_format,
-            "preferredquality": "0",  # best available quality, not a fixed bitrate
+            "preferredquality": "0",
         }
     ]
     if embed_metadata:
@@ -56,20 +58,16 @@ def build_ydl_opts(
     opts: dict = {
         "format": "bestaudio/best",
         "outtmpl": str(output_dir / "%(title)s.%(ext)s"),
-        "windowsfilenames": True,   # strips illegal chars on Win/Mac/Linux
+        "windowsfilenames": True,
         "postprocessors": postprocessors,
         "quiet": True,
         "no_warnings": True,
         "noprogress": True,
-        # web_embedded uses YouTube's iframe-player API (no sign-in required, stable SSL).
-        # ios is a fallback for videos that restrict embedded playback.
-        "extractor_args": {"youtube": {"player_client": ["web_embedded", "ios"]}},
-        "retries": 5,
-        "fragment_retries": 5,
-        "socket_timeout": 30,
     }
     if archive_path:
         opts["download_archive"] = str(archive_path)
+    if cookies_file:
+        opts["cookiefile"] = str(cookies_file)
     return opts
 
 
